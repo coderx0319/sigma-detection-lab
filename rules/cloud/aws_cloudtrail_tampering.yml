@@ -1,0 +1,28 @@
+title: AWS CloudTrail Logging Disabled or Deleted
+id: feb23a11-c2fe-4277-b2f2-88067a03fc5b
+status: test
+description: >
+  Detects an attempt to stop, delete or reconfigure a CloudTrail trail.
+  Disabling the audit trail is a direct attempt to blind the defender and
+  should be treated as an incident until proven to be a change request.
+references:
+  - https://attack.mitre.org/techniques/T1562/008/
+author: Shantanu Vedante
+date: 2026/11/26
+tags:
+  - attack.defense_evasion
+  - attack.t1562.008
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventName:
+      - 'StopLogging'
+      - 'DeleteTrail'
+      - 'UpdateTrail'
+      - 'PutEventSelectors'
+  condition: selection
+falsepositives:
+  - Infrastructure-as-code pipelines legitimately updating trail settings
+level: critical
