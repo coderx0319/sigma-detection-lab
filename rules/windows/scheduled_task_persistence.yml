@@ -1,0 +1,33 @@
+title: Scheduled Task Created From a User-Writable Path
+id: eedeab7e-5e22-4724-83dd-0ed57b28147f
+status: test
+description: >
+  Detects schtasks.exe creating a task that runs a binary from a
+  user-writable directory such as Temp, AppData or ProgramData. This is a
+  common persistence pattern because such paths need no administrator
+  rights to write to.
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+author: Shantanu Vedante
+date: 2026/11/26
+tags:
+  - attack.persistence
+  - attack.t1053.005
+  - attack.privilege_escalation
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_tool:
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains: '/create'
+  selection_path:
+    CommandLine|contains:
+      - '\AppData\'
+      - '\Temp\'
+      - '\ProgramData\'
+      - '\Public\'
+  condition: selection_tool and selection_path
+falsepositives:
+  - Application updaters that stage binaries in ProgramData
+level: high
