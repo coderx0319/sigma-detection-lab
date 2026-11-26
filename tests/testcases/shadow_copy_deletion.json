@@ -1,0 +1,50 @@
+{
+  "rule": "rules/windows/shadow_copy_deletion.yml",
+  "cases": [
+    {
+      "name": "vssadmin deleting all shadows",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\vssadmin.exe",
+        "CommandLine": "vssadmin.exe delete shadows /all /quiet",
+        "User": "NT AUTHORITY\\SYSTEM"
+      }
+    },
+    {
+      "name": "wmic shadowcopy delete",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\wbem\\wmic.exe",
+        "CommandLine": "wmic.exe shadowcopy delete",
+        "User": "NT AUTHORITY\\SYSTEM"
+      }
+    },
+    {
+      "name": "powershell shadowcopy enumeration",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "CommandLine": "powershell -c Get-WmiObject Win32_Shadowcopy | ForEach-Object { $_.Delete() }",
+        "User": "NT AUTHORITY\\SYSTEM"
+      }
+    },
+    {
+      "name": "listing shadows is read-only",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\vssadmin.exe",
+        "CommandLine": "vssadmin.exe list shadows",
+        "User": "CORP\\admin"
+      }
+    },
+    {
+      "name": "deleting a file is unrelated",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\cmd.exe",
+        "CommandLine": "cmd.exe /c del C:\\temp\\shadows.txt",
+        "User": "CORP\\admin"
+      }
+    }
+  ]
+}

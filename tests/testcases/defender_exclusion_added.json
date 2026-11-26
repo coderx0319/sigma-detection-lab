@@ -1,0 +1,41 @@
+{
+  "rule": "rules/windows/defender_exclusion_added.yml",
+  "cases": [
+    {
+      "name": "exclusion path added for user temp dir",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "CommandLine": "powershell -c Add-MpPreference -ExclusionPath C:\\Users\\Public\\",
+        "User": "CORP\\j.smith"
+      }
+    },
+    {
+      "name": "real-time monitoring disabled",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "CommandLine": "powershell -c Set-MpPreference -DisableRealtimeMonitoring $true",
+        "User": "CORP\\admin"
+      }
+    },
+    {
+      "name": "reading preferences is harmless",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "CommandLine": "powershell -c Get-MpPreference | Select ExclusionPath",
+        "User": "CORP\\admin"
+      }
+    },
+    {
+      "name": "unrelated MpPreference-free command",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "CommandLine": "powershell -c Get-Service WinDefend",
+        "User": "CORP\\admin"
+      }
+    }
+  ]
+}

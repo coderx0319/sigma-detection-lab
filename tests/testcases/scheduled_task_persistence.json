@@ -1,0 +1,41 @@
+{
+  "rule": "rules/windows/scheduled_task_persistence.yml",
+  "cases": [
+    {
+      "name": "task launching a binary from AppData",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\schtasks.exe",
+        "CommandLine": "schtasks.exe /create /sc minute /mo 5 /tn Updater /tr C:\\Users\\j.smith\\AppData\\Roaming\\svc.exe",
+        "User": "CORP\\j.smith"
+      }
+    },
+    {
+      "name": "task launching from Temp",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\schtasks.exe",
+        "CommandLine": "schtasks.exe /create /tn Maint /tr C:\\Windows\\Temp\\beacon.exe /sc onlogon",
+        "User": "NT AUTHORITY\\SYSTEM"
+      }
+    },
+    {
+      "name": "task from Program Files is normal",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\schtasks.exe",
+        "CommandLine": "schtasks.exe /create /tn BackupAgent /tr \"C:\\Program Files\\Veeam\\agent.exe\" /sc daily",
+        "User": "NT AUTHORITY\\SYSTEM"
+      }
+    },
+    {
+      "name": "querying tasks is not creating one",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\schtasks.exe",
+        "CommandLine": "schtasks.exe /query /tn \\Microsoft\\Windows\\UpdateOrchestrator",
+        "User": "CORP\\admin"
+      }
+    }
+  ]
+}

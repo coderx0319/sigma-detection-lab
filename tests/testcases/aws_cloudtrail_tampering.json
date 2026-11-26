@@ -1,0 +1,35 @@
+{
+  "rule": "rules/cloud/aws_cloudtrail_tampering.yml",
+  "cases": [
+    {
+      "name": "trail logging stopped",
+      "expect": true,
+      "event": {
+        "eventName": "StopLogging",
+        "userIdentity.type": "IAMUser",
+        "userIdentity.userName": "svc-deploy",
+        "awsRegion": "eu-west-2"
+      }
+    },
+    {
+      "name": "trail deleted",
+      "expect": true,
+      "event": {
+        "eventName": "DeleteTrail",
+        "userIdentity.type": "AssumedRole",
+        "userIdentity.userName": "admin-role",
+        "awsRegion": "eu-west-2"
+      }
+    },
+    {
+      "name": "reading trail status is harmless",
+      "expect": false,
+      "event": {
+        "eventName": "GetTrailStatus",
+        "userIdentity.type": "IAMUser",
+        "userIdentity.userName": "auditor",
+        "awsRegion": "eu-west-2"
+      }
+    }
+  ]
+}

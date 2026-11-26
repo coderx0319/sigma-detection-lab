@@ -1,0 +1,37 @@
+{
+  "rule": "rules/cloud/aws_root_console_login.yml",
+  "cases": [
+    {
+      "name": "root signs in to the console",
+      "expect": true,
+      "event": {
+        "eventName": "ConsoleLogin",
+        "userIdentity.type": "Root",
+        "sourceIPAddress": "198.51.100.23",
+        "awsRegion": "eu-west-2",
+        "responseElements.ConsoleLogin": "Success"
+      }
+    },
+    {
+      "name": "IAM user console login is normal",
+      "expect": false,
+      "event": {
+        "eventName": "ConsoleLogin",
+        "userIdentity.type": "IAMUser",
+        "sourceIPAddress": "198.51.100.23",
+        "awsRegion": "eu-west-2",
+        "responseElements.ConsoleLogin": "Success"
+      }
+    },
+    {
+      "name": "root API call without console login",
+      "expect": false,
+      "event": {
+        "eventName": "DescribeInstances",
+        "userIdentity.type": "Root",
+        "sourceIPAddress": "198.51.100.23",
+        "awsRegion": "eu-west-2"
+      }
+    }
+  ]
+}

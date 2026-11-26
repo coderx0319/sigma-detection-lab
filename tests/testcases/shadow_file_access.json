@@ -1,0 +1,55 @@
+{
+  "rule": "rules/linux/shadow_file_access.yml",
+  "cases": [
+    {
+      "name": "cat reading /etc/shadow",
+      "expect": true,
+      "event": {
+        "name": "/etc/shadow",
+        "exe": "/usr/bin/cat",
+        "uid": "0",
+        "comm": "cat"
+      }
+    },
+    {
+      "name": "python reading a private SSH key",
+      "expect": true,
+      "event": {
+        "name": "/home/deploy/.ssh/id_rsa",
+        "exe": "/usr/bin/python3",
+        "uid": "1001",
+        "comm": "python3"
+      }
+    },
+    {
+      "name": "sshd reading its own key material",
+      "expect": false,
+      "event": {
+        "name": "/etc/ssh/ssh_host_rsa_key",
+        "exe": "/usr/sbin/sshd",
+        "uid": "0",
+        "comm": "sshd"
+      }
+    },
+    {
+      "name": "unix_chkpwd reading shadow as designed",
+      "expect": false,
+      "event": {
+        "name": "/etc/shadow",
+        "exe": "/usr/sbin/unix_chkpwd",
+        "uid": "0",
+        "comm": "unix_chkpwd"
+      }
+    },
+    {
+      "name": "cat reading an ordinary config",
+      "expect": false,
+      "event": {
+        "name": "/etc/hosts",
+        "exe": "/usr/bin/cat",
+        "uid": "1001",
+        "comm": "cat"
+      }
+    }
+  ]
+}

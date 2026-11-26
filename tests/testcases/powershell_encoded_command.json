@@ -1,0 +1,55 @@
+{
+  "rule": "rules/windows/powershell_encoded_command.yml",
+  "cases": [
+    {
+      "name": "encoded payload spawned by Word",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "ParentImage": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+        "CommandLine": "powershell.exe -NoP -W Hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoA",
+        "User": "CORP\\j.smith"
+      }
+    },
+    {
+      "name": "pwsh with short -ec flag",
+      "expect": true,
+      "event": {
+        "Image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+        "CommandLine": "pwsh.exe -ec aQBlAHgAIAAoAGkAdwByACAAaAB0AHQAcAA6AC8ALwA=",
+        "User": "CORP\\svc_build"
+      }
+    },
+    {
+      "name": "benign scheduled inventory script",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "ParentImage": "C:\\Windows\\System32\\svchost.exe",
+        "CommandLine": "powershell.exe -ExecutionPolicy Bypass -File C:\\Scripts\\inventory.ps1",
+        "User": "NT AUTHORITY\\SYSTEM"
+      }
+    },
+    {
+      "name": "SCCM wrapper is excluded by filter",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "ParentImage": "C:\\Windows\\CCM\\CcmExec.exe",
+        "CommandLine": "powershell.exe -enc SQBuAHMAdABhAGwAbAAtAFAAYQBjAGsAYQBnAGUA",
+        "User": "NT AUTHORITY\\SYSTEM"
+      }
+    },
+    {
+      "name": "cmd.exe is not in scope",
+      "expect": false,
+      "event": {
+        "Image": "C:\\Windows\\System32\\cmd.exe",
+        "ParentImage": "C:\\Windows\\explorer.exe",
+        "CommandLine": "cmd.exe /c echo -enc test",
+        "User": "CORP\\j.smith"
+      }
+    }
+  ]
+}
