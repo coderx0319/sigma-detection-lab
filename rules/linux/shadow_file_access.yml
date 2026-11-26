@@ -1,0 +1,40 @@
+title: Sensitive Credential File Read by Unexpected Process
+id: 2b83a0e2-3ef7-4b73-8072-a9efb47152b4
+status: test
+description: >
+  Detects reads of /etc/shadow or private SSH keys by a process that is
+  not part of normal authentication handling. This is the Linux equivalent
+  of credential dumping and is a strong signal when it comes from a shell
+  or scripting interpreter.
+references:
+  - https://attack.mitre.org/techniques/T1003/008/
+  - https://attack.mitre.org/techniques/T1552/004/
+author: Shantanu Vedante
+date: 2026/11/26
+tags:
+  - attack.credential_access
+  - attack.t1003.008
+  - attack.t1552.004
+logsource:
+  product: linux
+  service: auditd
+detection:
+  selection_file:
+    name|contains:
+      - '/etc/shadow'
+      - '/etc/gshadow'
+      - '/.ssh/id_rsa'
+      - '/.ssh/id_ed25519'
+  selection_reader:
+    exe|endswith:
+      - '/bash'
+      - '/sh'
+      - '/python3'
+      - '/perl'
+      - '/cat'
+      - '/curl'
+  condition: selection_file and selection_reader
+falsepositives:
+  - Backup and configuration-audit scripts reading shadow deliberately
+  - Vulnerability scanners running authenticated checks
+level: critical

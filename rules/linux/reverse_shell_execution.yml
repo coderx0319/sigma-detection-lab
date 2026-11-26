@@ -1,0 +1,42 @@
+title: Reverse Shell Invocation on Linux
+id: e0e8d3ea-4dbc-4faf-9066-cfa6ddbe8183
+status: test
+description: >
+  Detects the classic one-liner patterns used to open an interactive
+  reverse shell back to an attacker, covering bash, netcat, python and
+  socat variants. These appear in web shell exploitation and post-
+  exploitation alike.
+references:
+  - https://attack.mitre.org/techniques/T1059/004/
+author: Shantanu Vedante
+date: 2026/11/26
+tags:
+  - attack.execution
+  - attack.t1059.004
+  - attack.command_and_control
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_bash_tcp:
+    CommandLine|contains:
+      - '/dev/tcp/'
+      - '/dev/udp/'
+  selection_netcat:
+    CommandLine|contains|all:
+      - 'nc '
+      - '-e '
+  selection_python:
+    CommandLine|contains|all:
+      - 'socket'
+      - 'subprocess'
+      - 'connect'
+  selection_socat:
+    CommandLine|contains|all:
+      - 'socat'
+      - 'exec:'
+  condition: 1 of selection_*
+falsepositives:
+  - Administrators testing network reachability with bash TCP redirection
+  - Security tooling running its own connectivity checks
+level: critical
