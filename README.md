@@ -1,6 +1,6 @@
 # Sigma Detection Lab
 
-**A tested library of Sigma detection rules — every rule proven to fire on the attack and stay quiet on the lookalike.**
+Sigma detection rules for Windows, Linux and AWS, where every rule is tested on both sides: it has to fire on the attack and stay quiet on the benign lookalike.
 
 [![Validate detection rules](https://github.com/coderx0319/sigma-detection-lab/actions/workflows/validate.yml/badge.svg)](https://github.com/coderx0319/sigma-detection-lab/actions/workflows/validate.yml)
 ![Rules](https://img.shields.io/badge/rules-10-blue)
@@ -9,36 +9,32 @@
 ![Python](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
----
+## Why I built this
 
-## Why this exists
+Writing a detection rule is easy. Knowing that it works is not.
 
-Writing a detection rule is easy. Knowing it works is not.
+A rule that never fires looks exactly like a quiet network, because both produce zero alerts. That silence reads as safety, which is what makes it dangerous. A rule that fires on every software deployment has the opposite problem: it gets muted inside a week, and once it is muted it is gone.
 
-A rule that never fires looks identical to a quiet network — both produce zero alerts. That silence is the most dangerous state in a SOC, because it reads as safety. Equally, a rule that fires on every software deployment gets muted within a week, and once muted it is gone.
+So this repo treats detections like code. Every rule ships with test cases on both sides of the line:
 
-So this repository treats detections the way you would treat code: **every rule ships with test cases on both sides of the line.**
+* a true positive case, proving the rule fires on the behaviour it claims to detect
+* one or more true negative cases of benign activity that looks similar, which are the events that generate the false positives analysts learn to ignore
 
-- A **true positive** case proving the rule fires on the behaviour it claims to detect
-- One or more **true negative** cases of benign activity that looks similar — the exact events that generate the false positives analysts learn to ignore
-
-A rule is not considered done until it passes both. CI runs the whole suite on every push.
-
----
+A rule is not finished until it passes both. CI runs the whole suite on every push.
 
 ## Quick start
 
 ```bash
 pip install -r requirements.txt
 
-python validate.py              # validate schemas + run every detection test
+python validate.py              # validate schemas and run every detection test
 python validate.py --coverage   # also print the ATT&CK coverage table
 python validate.py --rule lsass # narrow to one rule while tuning it
 
 python -m pytest tests/ -v      # same checks, one test per case
 ```
 
-`validate.py` exits non-zero if any rule fails its schema check or any detection test, so it drops straight into a pipeline.
+`validate.py` exits non zero if any rule fails its schema check or any detection test, so it drops straight into a pipeline.
 
 Sample output:
 
@@ -57,9 +53,7 @@ ALL CHECKS PASSED
   detection tests failed   : 0
 ```
 
----
-
-## Rule coverage
+## Rules
 
 | Rule | Platform | ATT&CK | Level |
 |---|---|---|---|
@@ -74,42 +68,38 @@ ALL CHECKS PASSED
 | [AWS Root Account Console Login](rules/cloud/aws_root_console_login.yml) | AWS | T1078.004 | High |
 | [CloudTrail Logging Disabled or Deleted](rules/cloud/aws_cloudtrail_tampering.yml) | AWS | T1562.008 | Critical |
 
-Coverage spans **12 ATT&CK techniques** across initial access, execution, persistence, privilege escalation, defence evasion, credential access and impact.
-
----
+That covers 12 ATT&CK techniques across initial access, execution, persistence, privilege escalation, defence evasion, credential access and impact.
 
 ## How it works
 
 ```
-rules/**/*.yml  ──►  loader.py   ──►  matcher.py  ──►  report.py
-  Sigma YAML         schema +          evaluate        PASS/FAIL table
-                     duplicate-id      condition       + ATT&CK coverage
-                     checks            against event
+rules/**/*.yml  ->  loader.py   ->  matcher.py  ->  report.py
+  Sigma YAML        schema and      evaluate        PASS/FAIL table
+                    duplicate id    condition       and ATT&CK coverage
+                    checks          against event
 ```
 
-| Module | Responsibility |
+| Module | What it does |
 |---|---|
-| `src/loader.py` | Parses rule YAML, enforces required Sigma fields, valid `level` and `status`, a usable `logsource`, and catches **duplicate rule IDs** — which silently break SIEM deployment |
-| `src/matcher.py` | Evaluates Sigma detection logic against a single event: field modifiers (`contains`, `startswith`, `endswith`, `re`, `all`), wildcards, list-as-OR semantics, and a recursive-descent parser for the condition grammar (`and` / `or` / `not`, parentheses, `1 of selection_*`, `all of them`) |
-| `src/report.py` | Renders the results table, the ATT&CK coverage matrix and the run summary |
-| `validate.py` | CLI entry point, pipeline-friendly exit codes |
-| `tests/test_rules.py` | Pytest wrapper: one test per rule/case pair, so a failure names the exact case |
+| `src/loader.py` | Parses the rule YAML and enforces the required Sigma fields, a valid `level` and `status`, a usable `logsource`, and no duplicate rule IDs. A duplicate ID silently breaks SIEM deployment, so it is worth catching early. |
+| `src/matcher.py` | Evaluates Sigma detection logic against a single event. Handles field modifiers (`contains`, `startswith`, `endswith`, `re`, `all`), wildcards, list as OR semantics, and a recursive descent parser for the condition grammar (`and`, `or`, `not`, parentheses, `1 of selection_*`, `all of them`). |
+| `src/report.py` | Renders the results table, the ATT&CK coverage matrix and the run summary. |
+| `validate.py` | CLI entry point with pipeline friendly exit codes. |
+| `tests/test_rules.py` | Pytest wrapper giving one test per rule and case pair, so a failure names the exact case. |
 
-The matcher implements the subset of the Sigma specification these rules use, including the case-insensitive string matching Sigma defaults to. It is deliberately a reimplementation rather than a dependency — writing the evaluator is how you learn what a detection rule actually asserts.
+The matcher covers the subset of the Sigma spec these rules use, including the case insensitive string matching that Sigma defaults to. I wrote it rather than pulling in pySigma on purpose, because writing the evaluator is how you learn what a detection rule actually asserts.
 
----
+## Adding a rule
 
-## Writing a new rule
-
-1. Add the rule under `rules/<platform>/<name>.yml` with ATT&CK tags and a realistic `falsepositives` section.
-2. Add `tests/testcases/<name>.json` with at least one true positive **and** one true negative:
+1. Drop the rule in `rules/<platform>/<name>.yml` with ATT&CK tags and a realistic `falsepositives` section.
+2. Add `tests/testcases/<name>.json` with at least one true positive and one true negative:
 
 ```json
 {
   "rule": "rules/windows/my_rule.yml",
   "cases": [
-    { "name": "the attack",        "expect": true,  "event": { "Image": "...", "CommandLine": "..." } },
-    { "name": "the benign twin",   "expect": false, "event": { "Image": "...", "CommandLine": "..." } }
+    { "name": "the attack",      "expect": true,  "event": { "Image": "...", "CommandLine": "..." } },
+    { "name": "the benign twin", "expect": false, "event": { "Image": "...", "CommandLine": "..." } }
   ]
 }
 ```
@@ -118,24 +108,20 @@ The matcher implements the subset of the Sigma specification these rules use, in
 
 The harness fails any rule with no test cases and any rule with no ATT&CK tag, so coverage cannot quietly rot.
 
----
+## Limitations worth knowing
 
-## Design notes and honest limitations
-
-- **Single-event matching only.** Sigma rules describe one event. Genuine correlation — brute force followed by a success, beaconing intervals, impossible travel — needs state across events and belongs in the SIEM layer, not here.
-- **Field names are source-specific.** The Windows rules assume Sysmon-style field names (`Image`, `CommandLine`, `GrantedAccess`). Pointing them at a different pipeline means remapping fields first; a wrong field name produces a rule that never fires and never errors.
-- **The true negatives are representative, not exhaustive.** They encode the false positives documented in each rule. Real tuning needs real telemetry from the estate the rule will run in.
-- **Filters trade detection for noise.** The Defender exclusion in the LSASS rule is a deliberate choice: an attacker who runs from the Defender platform directory would be missed. That is a documented gap, not an oversight.
-
----
+* **Single event matching only.** A Sigma rule describes one event. Real correlation, like brute force followed by a success, beaconing intervals or impossible travel, needs state across events and belongs in the SIEM layer rather than here.
+* **Field names are source specific.** The Windows rules assume Sysmon style field names such as `Image`, `CommandLine` and `GrantedAccess`. Pointing them at a different pipeline means remapping fields first, and a wrong field name gives you a rule that never fires and never errors.
+* **The true negatives are representative, not exhaustive.** They encode the false positives documented in each rule. Proper tuning needs real telemetry from the estate the rule will run in.
+* **Filters trade detection for noise.** The Defender exclusion in the LSASS rule is a choice: an attacker running from the Defender platform directory would be missed. That is a documented gap rather than an oversight.
 
 ## Author
 
-**Shantanu Vedante** — MSc Cyber Security, University of Kent
+Shantanu Vedante, MSc Cyber Security, University of Kent.
 [LinkedIn](https://www.linkedin.com/in/shantanuvedante03/) · [Portfolio](https://shantanuvedantetechie.vercel.app/)
 
-Built as part of a blue-team portfolio alongside [ThreatLens](https://github.com/coderx0319/ThreatLens-CVE) (CVE prioritisation) and [PhishGuard](https://github.com/coderx0319/PhishGuard) (phishing triage).
+Part of a blue team portfolio alongside [ThreatLens](https://github.com/coderx0319/ThreatLens-CVE) for CVE prioritisation and [PhishGuard](https://github.com/coderx0319/PhishGuard) for phishing triage.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
